@@ -1363,7 +1363,8 @@ DoUpdate:
 
         /* Update the mounted devices list */
         // FIXME: This should technically be done by mountmgr (if AutoMount is enabled)!
-        SetMountedDeviceValues(PartitionList);
+        // SetMountedDeviceValues(PartitionList);
+        ImportMountedDevices();
     }
 
 #ifdef __REACTOS__

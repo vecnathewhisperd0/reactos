@@ -74,8 +74,8 @@ PartitionCreateDevice(
     partExt->DeviceName = deviceName;
     partExt->StartingOffset = PartitionEntry->StartingOffset.QuadPart;
     partExt->PartitionLength = PartitionEntry->PartitionLength.QuadPart;
-    partExt->OnDiskNumber = PartitionEntry->PartitionNumber; // the "physical" partition number
-    partExt->DetectedNumber = PdoNumber; // counts only partitions with PDO created
+    partExt->OnDiskNumber = PartitionEntry->PartitionNumber; // The on-disk partition ordinal // HACK: using PartitionEntry->PartitionNumber is hackish
+    partExt->DetectedNumber = PdoNumber; // Counts only partitions with PDO created
     partExt->VolumeNumber = volumeNum;
 
     partExt->DeviceObject = partitionDevice;
@@ -102,7 +102,7 @@ PartitionHandleStartDevice(
     UNICODE_STRING partitionSymlink, interfaceName;
     PFDO_EXTENSION fdoExtension = PartExt->LowerDevice->DeviceExtension;
 
-    // \\Device\\Harddisk%lu\\Partition%lu
+    // "\\Device\\Harddisk%lu\\Partition%lu"
     swprintf(nameBuf, PartitionSymLinkFormat,
         fdoExtension->DiskData.DeviceNumber, PartExt->DetectedNumber);
 
@@ -288,6 +288,7 @@ PartitionHandleRemove(
         UNICODE_STRING partitionSymlink;
         PFDO_EXTENSION fdoExtension = PartExt->LowerDevice->DeviceExtension;
 
+        // "\\Device\\Harddisk%lu\\Partition%lu"
         swprintf(nameBuf, PartitionSymLinkFormat,
             fdoExtension->DiskData.DeviceNumber, PartExt->DetectedNumber);
 
@@ -677,12 +678,11 @@ PartitionHandleDeviceControl(
 
             PartMgrAcquireLayoutLock(fdoExtension);
 
-            // these functions use on disk numbers, not detected ones
+            // This function uses on-disk (ordinal) partition numbers, not detected ones
             status = IoSetPartitionInformation(fdoExtension->LowerDevice,
                                                fdoExtension->DiskData.BytesPerSector,
                                                partExt->OnDiskNumber,
                                                inputBuffer->PartitionType);
-
             if (NT_SUCCESS(status))
             {
                 partExt->Mbr.PartitionType = inputBuffer->PartitionType;
@@ -704,11 +704,10 @@ PartitionHandleDeviceControl(
 
             PartMgrAcquireLayoutLock(fdoExtension);
 
-            // these functions use on disk numbers, not detected ones
+            // This function uses on-disk (ordinal) partition numbers, not detected ones
             status = IoSetPartitionInformationEx(fdoExtension->LowerDevice,
                                                  partExt->OnDiskNumber,
                                                  inputBuffer);
-
             if (NT_SUCCESS(status))
             {
                 if (fdoExtension->DiskData.PartitionStyle == PARTITION_STYLE_MBR)

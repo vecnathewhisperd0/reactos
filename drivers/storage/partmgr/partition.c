@@ -560,6 +560,10 @@ PartitionHandlePnp(
     return status;
 }
 
+/**
+ * @brief
+ * IOCTL dispatcher for partition/volume device objects.
+ **/
 NTSTATUS
 PartitionHandleDeviceControl(
     _In_ PDEVICE_OBJECT DeviceObject,
@@ -761,9 +765,14 @@ PartitionHandleDeviceControl(
 
             // Partition device should just adjust the starting offset
             verifyInfo->StartingOffset.QuadPart += partExt->StartingOffset;
+            // FIXME:
+            // - do the addition and check there's no wrapping,
+            // - check we aren't outside of the partition.
+
             return ForwardIrpAndForget(DeviceObject, Irp);
         }
-        case IOCTL_DISK_UPDATE_PROPERTIES:
+
+        case IOCTL_DISK_UPDATE_PROPERTIES: // Here, this is used for volume, but: is this really required?
         {
             fdoExtension->LayoutValid = FALSE;
             IoInvalidateDeviceRelations(fdoExtension->PhysicalDiskDO, BusRelations);
@@ -771,10 +780,17 @@ PartitionHandleDeviceControl(
             status = STATUS_SUCCESS;
             break;
         }
+        // NOTE: Shouldn't be needed, default: case already does this.
         case IOCTL_STORAGE_MEDIA_REMOVAL:
         {
             return ForwardIrpAndForget(DeviceObject, Irp);
         }
+
+// TODO:
+// IOCTL_STORAGE_GET_DEVICE_NUMBER
+// IOCTL_DISK_GET_PARTITION_ATTRIBUTES
+// IOCTL_DISK_SET_PARTITION_ATTRIBUTES
+
         // volume stuff (most of that should be in volmgr.sys once it is implemented)
         case IOCTL_VOLUME_GET_VOLUME_DISK_EXTENTS:
         {
@@ -866,6 +882,7 @@ PartitionHandleDeviceControl(
             Irp->IoStatus.Information = sizeof(*gptAttrs);
             break;
         }
+
         // mountmgr notifications (these should be in volmgr.sys once it is implemented)
         case IOCTL_MOUNTDEV_QUERY_DEVICE_NAME:
         {

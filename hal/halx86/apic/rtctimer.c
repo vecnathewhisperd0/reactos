@@ -188,6 +188,17 @@ HalpClockInterruptHandler(IN PKTRAP_FRAME TrapFrame)
 
     /* Update the system time -- on x86 the kernel will exit this trap  */
     KeUpdateSystemTime(TrapFrame, LastIncrement, Irql);
+#ifndef _M_IX86
+    /* End the interrupt */
+    //KiEndInterrupt(Irql, TrapFrame);
+
+    /* Disable interrupts and end the interrupt */
+    _disable();
+    HalEndSystemInterrupt(Irql, TrapFrame);
+
+    /* Exit the interrupt */
+    KiEoiHelper(TrapFrame);
+#endif
 }
 
 VOID
@@ -210,11 +221,22 @@ HalpClockIpiHandler(IN PKTRAP_FRAME TrapFrame)
         KiEoiHelper(TrapFrame);
     }
 
-    /* Call the kernel to update runtimes */
+    /* Call the kernel to update runtime */
     KeUpdateRunTime(TrapFrame, Irql);
 
+#ifdef _M_IX86
     /* End the interrupt */
     KiEndInterrupt(Irql, TrapFrame);
+#else
+    /* On non-x86, the KiEndInterrupt() macro is a no-op,
+     * so we have to implement it ourselves */
+    /* Disable interrupts and end the interrupt */
+    _disable();
+    HalEndSystemInterrupt(Irql, TrapFrame);
+
+    /* Exit the interrupt */
+    KiEoiHelper(TrapFrame);
+#endif
 }
 
 ULONG

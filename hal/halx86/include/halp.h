@@ -587,7 +587,8 @@ HalInitializeBios(
 #define KfLowerIrql KeLowerIrql
 #define KiEnterInterruptTrap(TrapFrame) /* We do all neccessary in asm code */
 #define KiEoiHelper(TrapFrame) return /* Just return to the caller */
-#define HalBeginSystemInterrupt(Irql, Vector, OldIrql) ((*(OldIrql) = PASSIVE_LEVEL), TRUE)
+///// #define HalBeginSystemInterrupt(Irql, Vector, OldIrql) ((*(OldIrql) = PASSIVE_LEVEL), TRUE)
+///// #define HalEndSystemInterrupt(OldIrql, TrapFrame)
 #endif // _M_AMD64
 
 extern BOOLEAN HalpNMIInProgress;

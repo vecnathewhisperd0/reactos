@@ -743,7 +743,16 @@ HalDisableSystemInterrupt(
     IOApicWrite(IOAPIC_REDTBL + 2 * Index, ReDirReg.Long0);
 }
 
-#ifndef _M_AMD64
+// #ifndef _M_AMD64
+/*
+ * FIXME: Left enabled, until the non-x86 HAL uses the kernel's
+ * KeInitializeInterrupt(), KeConnectInterrupt() (or its HAL version)
+ * so that, when the interrupt handlers are invoked, they already
+ * are running with the correct IRQL, instead of being enforced with
+ * HalBeginSystemInterrupt() and cleaned up with HalEndSystemInterrupt().
+ *
+ * This code was originally #ifndef _M_AMD64 by commit f085f50747 (r53631).
+ */
 BOOLEAN
 NTAPI
 HalBeginSystemInterrupt(
@@ -822,10 +831,11 @@ HalEndSystemInterrupt(
     /* Restore the old IRQL */
     ApicLowerIrql(OldIrql);
 }
-
+// #endif /* !_M_AMD64 */
 
 /* IRQL MANAGEMENT ************************************************************/
 
+#ifndef _M_AMD64
 KIRQL
 NTAPI
 KeGetCurrentIrql(VOID)
